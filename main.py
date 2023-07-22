@@ -28,7 +28,7 @@ cha_poly1 = np.asarray(cha_poly_lst1)
 phase_lst1 = [int(x) for x in input("Введите фазу в 2-ичном виде через пробел: ").split()]
 phase1 = np.asarray(phase_lst1)
 
-m1 = get_m(cha_poly1, phase1) #Первая m-последоватедьность
+m1 = get_m(cha_poly1, phase1) #Первая m-последовательность
 print("Длина кода первой послед. :", len(m1))
 
 cha_poly_lst2 = [int(x) for x in input("""Введите характеристический многочлен в 2-ичном виде через пробел 
@@ -37,9 +37,9 @@ cha_poly2 = np.asarray(cha_poly_lst2)
 phase_lst2 = [int(x) for x in input("Введите фазу в 2-ичном виде через пробел: ").split()]
 phase2 = np.asarray(phase_lst2)
 
-m2 = get_m(cha_poly2, phase2) #Вторая m-последоватедьность
+m2 = get_m(cha_poly2, phase2) #Вторая m-последовательность
 print("Длина кода первой послед. :", len(m2))
 
-shift_mean = int(input("Введите значение сдвига м-последовательности: "))
+shift_mean = int(input("Введите значение сдвига m-последовательности: "))
 m2 = np.roll(m2, shift_mean)
 print(f"Итоговый код Голда со сдвигом {shift_mean}: {summ(m1, m2)}")
