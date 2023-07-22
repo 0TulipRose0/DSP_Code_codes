@@ -37,7 +37,7 @@ cha_poly2 = np.asarray(cha_poly_lst2)
 phase_lst2 = [int(x) for x in input("Введите фазу в 2-ичном виде через пробел: ").split()]
 phase2 = np.asarray(phase_lst2)
 
-m2 = get_m(cha_poly2, phase2) #Первая m-последоватедьность
+m2 = get_m(cha_poly2, phase2) #Вторая m-последоватедьность
 print("Длина кода первой послед. :", len(m2))
 
 shift_mean = int(input("Введите значение сдвига м-последовательности: "))
