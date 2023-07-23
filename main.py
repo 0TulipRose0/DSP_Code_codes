@@ -3,6 +3,7 @@ import numpy as np
 def get_m(polinom: np.array, phase1: np.array) -> np.array:
     if (len(polinom) != len(phase1)):
         print("Введены неверные исходыне данные.")
+        raise SystemExit
     else:
         m = np.array([])
         for i in range(0, 2 ** (len(polinom)) - 1):
