@@ -8,7 +8,7 @@ module Generator#(
     parameter PHASE1    = 5'b01010,  //Phase 1 M-sequence
     parameter PHASE2    = 5'b01110,   //Phase 2 M-sequence
 
-    parameter SHIFT     = 5'd0       //Shift for 2-nd M-sequence
+    parameter SHIFT     = 5'd3       //Shift for 2-nd M-sequence
     )(
     input  logic     clkin,
     input  logic     rstn,
@@ -16,7 +16,7 @@ module Generator#(
     output logic     out     
     
     );
-    /////////////////////////
+    ////////////////////////
     // Local declarations //
     ////////////////////////
     logic [4:0]     step_var1, step_var2;
@@ -26,10 +26,12 @@ module Generator#(
     logic [30:0]    m_seq1, m_seq2, m_sum;
     
     logic [5:0]     cnt;
+    logic           fix;
 
     enum 
-    logic {prepering = 1'b0,
-           ready     = 1'b1} states;
+    logic [1:0]     {prepering = 2'b00,
+                     shift_sum = 2'b01,
+                     ready     = 2'b10} states;
     //1-st state generate main m-seq
     //2-nd state continues to generate a sequence and sends a bit to the output
 
@@ -43,42 +45,54 @@ module Generator#(
         phase1 <= PHASE1; 
         phase2 <= PHASE2;
         cnt <= 0;
+        fix <= 1;
         states <= prepering;
         end else begin
         case (states)
             prepering : begin        
-                        step_var1 = poly1 & phase1;
-                        xor1 = ^step_var1;   
+
+                        xor1 = ^(poly1 & phase1);   
                         m_seq1 <= {m_seq1[29:0], xor1};
                         phase1 <= {xor1, phase1[4:1]};      //m-sequence first
 
-                        step_var2 = poly2 & phase2;
-                        xor2 = ^step_var2;
+                        xor2 = ^(poly2 & phase2);
                         m_seq2 <= {m_seq2[29:0], xor2};
                         phase2 <= {xor2, phase2[4:1]};      //m-sequence second
-                        cnt = cnt + 1;                      //Sequence ready counter
+                        cnt <= cnt + 1;                      //Sequence ready counter
 
-                        if(cnt == 6'd32) begin
-                            states <= ready;
+                        if(cnt == 5'd30) begin
+                            states <= shift_sum;
 
-                            if(SHIFT != 1'b0)               //shift operation
-                            m_seq2 = {m_seq2[30:31-SHIFT], m_seq2[30-SHIFT: 0]};
-
-                            m_sum = m_seq1 ^ m_seq2;        //"Gold" code out
+ //                           if(SHIFT != 1'b0)               //shift operation
+//                            m_seq2 = {m_seq2[SHIFT-1:0], m_seq2[30:SHIFT]};
+//
+//                            m_sum = m_seq1 ^ m_seq2;        //"Gold" code out
                         end  
                         end
 
+
+            shift_sum : begin
+                        if(SHIFT != 1'b0)               //shift operation
+                        m_seq2 = {m_seq2[SHIFT-1:0], m_seq2[30:SHIFT]};
+
+                        m_sum = m_seq1 ^ m_seq2;        //"Gold" code out
+                        
+                        states <= ready;
+                        end 
+            
+            
             ready : begin
-
+                    
+                    if(fix == 0)
                     out <= m_sum[30];                       
-
-                    step_var1 <= poly1 ^ phase1;
-                    xor1 = ^step_var1;
+                    if(fix == 1)
+                    fix <= fix -1;
+                    
+                    xor1 = ^(poly1 ^ phase1);
                     m_seq1 <= {m_seq1[29:0], xor1};
                     phase1 <= {xor1, phase1[4:1]};
 
-                    step_var2 <= poly2 ^ phase2;
-                    xor2 <= ^step_var2;
+                    xor2 = ^(poly2 ^ phase2);
                     m_seq2 <= {m_seq2[29:0], xor2};
                     phase2 <= {xor2, phase2[4:1]};
 
