@@ -1,105 +1,93 @@
-//TulipRose/Dmitriy V.
 
-module Generator#(
-    //Polynomials are specified without the first "1"
-    parameter POLYNOME1 = 5'b00101,  //Polynomial 1 M-sequence
-    parameter POLYNOME2 = 5'b01101,  //Polynomial 2 M-sequence
-    //Phase should not be only zeros!
-    parameter PHASE1    = 5'b01010,  //Phase 1 M-sequence
-    parameter PHASE2    = 5'b01110,   //Phase 2 M-sequence
-
-    parameter SHIFT     = 5'd3       //Shift for 2-nd M-sequence
+module Generator#(    
+    //Lenght of the code
+    parameter N          = 63,
+    //Polynom lenght
+    parameter LENGTH     = $clog2(N), 
+    //Number of Gold codes    
+    parameter QUA        =  10,
+    //Number of cycles of holding code at the out
+    parameter HOLD       = 4,
+    //Number of cycles
+    parameter NUM_SYCLES = 100000 //1ms
     )(
-    input  logic     clkin,
-    input  logic     rstn,
     
-    output logic     out     
+    input logic               clkin,
+    input logic               rstn,
+    input logic               ready_i,
+    
+    output logic [LENGTH-1:0] code2_o,
+    output logic              gating_sig,
+    output logic              tvalid_o
     
     );
     ////////////////////////
     // Local declarations //
     ////////////////////////
-    logic [4:0]     step_var1, step_var2;
-    logic           xor1, xor2;
     
-    logic [4:0]     poly1, poly2, phase1, phase2;
-    logic [30:0]    m_seq1, m_seq2, m_sum;
-    
-    logic [5:0]     cnt;
-    logic           fix;
-
     enum 
-    logic [1:0]     {prepering = 2'b00,
-                     shift_sum = 2'b01,
-                     ready     = 2'b10} states;
-    //1-st state generate main m-seq
-    //2-nd state continues to generate a sequence and sends a bit to the output
+    logic [1:0] {waiting = 2'b00,
+                 changing = 2'b01,
+                 end_transaction = 2'b10                 
+                                } states;
+
+   logic [LENGTH-1:0] gold_shift2;
+
+   logic [17:0]       transaction_cnt;
+   
+   logic [HOLD:0]     hold_last_bit;
+   logic [HOLD:0]     hold_first_bit;      
+   
+   logic              ready_reg;  
+
+   logic [LENGTH-1:0] cnt_shift;             
+
+   logic [LENGTH-1:0] table_shift[0:10];
+   
+   logic              shift_done;
 
     //////////////////
     // Main program //
     //////////////////
+    
     always_ff @(posedge clkin) begin
-        if(~rstn) begin
-        poly1 <= POLYNOME1; 
-        poly2 <= POLYNOME2; 
-        phase1 <= PHASE1; 
-        phase2 <= PHASE2;
-        cnt <= 0;
-        fix <= 1;
-        states <= prepering;
-        end else begin
-        case (states)
-            prepering : begin        
+      if(~rstn) begin
+         table_shift <= '{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+         cnt_shift <= 0;
+         transaction_cnt <= NUM_SYCLES - 1;         
+         gold_shift2 <= 0;
+      end else begin
+         
+     if(ready_i && (cnt_shift < (QUA+1))) begin       
+        tvalid_o = 1;          
+        gold_shift2 = table_shift[cnt_shift];
+        code2_o = gold_shift2;                    
+        shift_done = 1;
+     end
+     
+     if(shift_done && ~ready_i) begin
+        cnt_shift <= cnt_shift + 1'b1;
+        shift_done <= 0;
+        code2_o = gold_shift2;
+     end
+     
+     if(cnt_shift == (QUA+1)) begin
+            tvalid_o = 0;
+            gold_shift2 = table_shift[0];                                                            
+     end
 
-                        xor1 = ^(poly1 & phase1);   
-                        m_seq1 <= {m_seq1[29:0], xor1};
-                        phase1 <= {xor1, phase1[4:1]};      //m-sequence first
+     if(transaction_cnt == 0) begin
+        transaction_cnt = NUM_SYCLES;
+        tvalid_o <= 1; 
+        cnt_shift <= 0;
+        code2_o <= table_shift[0];
+     end  
 
-                        xor2 = ^(poly2 & phase2);
-                        m_seq2 <= {m_seq2[29:0], xor2};
-                        phase2 <= {xor2, phase2[4:1]};      //m-sequence second
-                        cnt <= cnt + 1;                      //Sequence ready counter
+        transaction_cnt <= transaction_cnt - 1;
 
-                        if(cnt == 5'd30) begin
-                            states <= shift_sum;
+    end 
+  
 
- //                           if(SHIFT != 1'b0)               //shift operation
-//                            m_seq2 = {m_seq2[SHIFT-1:0], m_seq2[30:SHIFT]};
-//
-//                            m_sum = m_seq1 ^ m_seq2;        //"Gold" code out
-                        end  
-                        end
-
-
-            shift_sum : begin
-                        if(SHIFT != 1'b0)               //shift operation
-                        m_seq2 = {m_seq2[SHIFT-1:0], m_seq2[30:SHIFT]};
-
-                        m_sum = m_seq1 ^ m_seq2;        //"Gold" code out
-                        
-                        states <= ready;
-                        end 
-            
-            
-            ready : begin
-                    
-                    if(fix == 0)
-                    out <= m_sum[30];                       
-                    if(fix == 1)
-                    fix <= fix -1;
-                    
-                    xor1 = ^(poly1 ^ phase1);
-                    m_seq1 <= {m_seq1[29:0], xor1};
-                    phase1 <= {xor1, phase1[4:1]};
-
-                    xor2 = ^(poly2 ^ phase2);
-                    m_seq2 <= {m_seq2[29:0], xor2};
-                    phase2 <= {xor2, phase2[4:1]};
-
-                    m_sum <= m_seq1 ^ m_seq2;
-                    end
-        endcase
-
-        end
     end
+
 endmodule
