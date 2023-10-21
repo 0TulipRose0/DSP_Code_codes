@@ -4,8 +4,10 @@ module top #(
     //Polynom lenght
     parameter LENGTH     = $clog2(N)
     )(
-    input logic clkin,
+    input logic sysclk,
+    input logic btn[0],
     
+    output logic ja[0],
     output logic code_gold
     );
     
@@ -15,42 +17,32 @@ module top #(
     // Local declarations //
     ////////////////////////
     
-    logic [LENGTH-1:0]  code1, code2;
-    logic               ready;
-    logic               tvalid;
-    logic               rstn;    
+    logic               aclk, strobe_sig, clk_100MHz;         
+    axistream_if        axis(aclk);
     
-    logic               gating_sig;
-    logic               clk_100MHz;
-    
-    
-
     /////////////////
     // Connections //
     /////////////////
     
     Gold_gen gold_gen(
         .clkin(clk_100MHz),
-        .rstn(rstn), 
-        .code2_i(code2),
-        .ready_o(ready),
-        .tvalid_i(tvalid),   
-        .code_gold(code_gold)
+        .rstn(btn[0]), 
+        .code_gold(ja[0]),
+        .strobe_sig_o(strobe_sig),
+        .s_axis(axis)
     );
     
     Generator shift_gen(
         .clkin(clk_100MHz),
-        .rstn(rstn),
-        .ready_i(ready),
-        .tvalid_o(tvalid),        
-        .code2_o(code2),
-        .gating_sig(gating_sig) 
+        .rstn(btn[0]),
+        .m_axis(axis)
     );
     
     pll pll(
-        .clkin(clkin),
+        .clkin(sysclk),
         .clk_100MHz(clk_100MHz),
-        .rstn_lock(rstn)
+        .aclk(aclk),
+        .rstn_lock(btn[0])
     );
          
     

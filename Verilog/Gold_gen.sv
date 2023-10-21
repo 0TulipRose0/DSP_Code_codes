@@ -10,15 +10,11 @@ module Gold_gen#(
     input logic              clkin,
     input logic              rstn,
     
-    //shift signals for both m-modules
-    input logic [LENGTH-1:0] code2_i,
-    
-    input logic              tvalid_i,
-    
-    //ready out and code "Gold"
-    output logic             ready_o,
+    //strobe sig and code "Gold"    
+    output logic             strobe_sig_o,
     output logic             code_gold,
-    output logic             strobe_sig   
+    
+    axistream_if.slave  s_axis 
     );  
     
 
@@ -30,8 +26,7 @@ module Gold_gen#(
     logic                   out1, out2;
     logic                   valid1, valid2;
     logic [LENGTH-1:0]      code1_i;
-    
-    logic [6:0]             cnt;
+    logic                   strobe_o;        
     
     /////////////////
     // Connections //
@@ -39,25 +34,27 @@ module Gold_gen#(
 
 
     //1 param - polynome, 2 - length of code, 3 - polynome length, 4 - Hold value
-    M_Sequence_gen1 #(6'b000011, 6'd63, 4'd6, 7'd4)
+    M_Sequence_gen1 #(6'b000011, 6'd63, 4'd6, 7'd3)
     m1(
     .clkin(clkin),
     .rstn(rstn),
     .out(out1),
     .valid(valid1),
     .code_i(code1_i),
-    .ready_o(ready1)
+    .ready_o(ready1),
+    .strobe_o()
     );
     
-    M_Sequence_gen2 #(6'b100111, 6'd63, 4'd6, 7'd4) 
+    M_Sequence_gen2 #(6'b100111, 6'd63, 4'd6, 7'd3) 
     m2
     ( 
     .clkin(clkin),
     .rstn(rstn),
     .out(out2),
     .valid(valid2),
-    .code_i(code2_i),
-    .ready_o(ready2)
+    .code_i(s_axis.tdata),
+    .ready_o(ready2),
+    .strobe_o(strobe_o)
    
     );
     
@@ -65,11 +62,12 @@ module Gold_gen#(
     // Top Module //
     ////////////////
     
-    assign ready_o = ready2;
+    assign s_axis.tready = ready2;
     assign code1_i = 1'b0;
+    assign strobe_sig_o = strobe_o;
     
     always_ff @(posedge clkin) begin
-        if(tvalid_i) begin
+        if(s_axis.tvalid) begin
             valid1 <= 1;
             valid2 <= 1;
             code_gold = out1 ^ out2;            

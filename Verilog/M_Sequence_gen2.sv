@@ -51,8 +51,9 @@ module M_Sequence_gen2#(
             xor_op <= 0;
             strobe_o <= 0;
                        
-        end else if((code_i != 0 || code_i == 0) && valid) begin         
-            ready_o  <= 1'b0;            
+        end else if((code_i != 0 || code_i == 0) && (valid || hold_cnt != 0)) begin         
+            ready_o  <= 1'b0; 
+            hold_cnt <= HOLD - 1;           
             if(tr_start) begin
             code <= code_i;
             tr_start <= 0;
@@ -169,14 +170,13 @@ module M_Sequence_gen2#(
                  end 
                  
          end else begin
-            strobe_o <= 0;
-            out <= 0;
-            ready_o <= 1'b1;
-            cnt <= N;
-            tr_start <= 1;
-            hold_cnt <= HOLD - 1;
+            //strobe_o <= 0;
+            out = 0;
+            ready_o = 1'b1;
+            cnt = N;
+            tr_start = 1;                            
+            if(cnt == 63 && ~valid) strobe_o = 0;
          end
-        
     end
 
 endmodule

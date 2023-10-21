@@ -1,13 +1,12 @@
 module pll#(
         parameter DIVIDE = 6,
         parameter MASTER_DIVISION = 1
-    )(
-        
+    )(        
         input  logic clkin,
         
         output logic clk_100MHz,
-        output logic rstn_lock
-        
+        output logic aclk,
+        output logic rstn_lock        
     );
     
     ////////////////////////
@@ -61,7 +60,7 @@ module pll#(
       .CLKOUT0B(),   // 1-bit output: Inverted CLKOUT0
       .CLKOUT1(clk_100MHz),     // 1-bit output: CLKOUT1
       .CLKOUT1B(),   // 1-bit output: Inverted CLKOUT1
-      .CLKOUT2(),     // 1-bit output: CLKOUT2
+      .CLKOUT2(aclk),     // 1-bit output: CLKOUT2
       .CLKOUT2B(),   // 1-bit output: Inverted CLKOUT2
       .CLKOUT3(),     // 1-bit output: CLKOUT3
       .CLKOUT3B(),   // 1-bit output: Inverted CLKOUT3
