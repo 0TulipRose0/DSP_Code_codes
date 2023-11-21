@@ -40,7 +40,7 @@ module Gold_gen#(
     .rstn(rstn),
     .out(out1),
     .valid(valid1),
-    .code_i(code1_i),
+    .code_i(s_axis.tuser),
     .ready_o(ready1),
     .strobe_o()
     );
@@ -55,7 +55,6 @@ module Gold_gen#(
     .code_i(s_axis.tdata),
     .ready_o(ready2),
     .strobe_o(strobe_o)
-   
     );
     
     ////////////////
@@ -65,16 +64,15 @@ module Gold_gen#(
     assign s_axis.tready = ready2;
     assign code1_i = 1'b0;
     assign strobe_sig_o = strobe_o;
+    assign code_gold = out1 ^ out2;
     
     always_ff @(posedge clkin) begin
-        if(s_axis.tvalid) begin
+        if(s_axis.tvalid) begin           
             valid1 <= 1;
-            valid2 <= 1;
-            code_gold = out1 ^ out2;            
-        end else begin            
+            valid2 <= 1;                        
+        end else begin                          
             valid1 <= 0;
-            valid2 <= 0;
-            code_gold <= 0;
+            valid2 <= 0;           
         end
         
     end

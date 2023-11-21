@@ -8,14 +8,12 @@ module tb();
     parameter              PERIOD     = 83.3;
     parameter              LENGTH     = 63;             //code lenght for checks   
     parameter              POLY_LEN   = $clog2(LENGTH); //polynom lenght 
-    parameter              HOLD_PARAM = 2;
+    parameter              HOLD_PARAM = 3;
 
     logic                  clkin;                       //clocking
     logic                  rstn;                        //reset
-
-    logic                  ready;                       //ready signal 
-    logic                  tvalid;
-    logic [POLY_LEN-1:0]   code1, code2;                //phase signals
+   
+    logic [POLY_LEN-1:0]   code1;                //phase signals
 
     logic [LENGTH-1:0]     final_gold_code;             //the register that serves to check the final Gold code       
 
@@ -26,20 +24,19 @@ module tb();
     integer                shift;
     integer                hold;
     
-    logic [LENGTH-1:0] table_gold[0:LENGTH];            //Table of values        
+    logic [LENGTH-1:0] table_gold[0:LENGTH];            //Table of values 
+    axistream_if        axis(clkin);       
 
 /////////////////
 // Connections //
 /////////////////
 
-    Gold_gen gen(
+    Gold_gen gold_gen(
         .clkin(clkin),
         .rstn(rstn), 
-        .code1_i(code1),
-        .code2_i(code2),
-        .ready_o(ready),   
         .code_gold(code_gold),
-        .tvalid_i(tvalid)
+        .strobe_sig_o(),
+        .s_axis(axis)
     );
 
 ////////////////
@@ -57,12 +54,12 @@ module tb();
     shift_state <= 0;
         rstn <= 0;
         hold <= HOLD_PARAM - 1;
-        tvalid <= 1;
+        axis.tvalid <= 1;
         #100;
         rstn <= 1;
         #10
         code1 <= 6'b000000;
-        code2 <= 6'b000000;
+        axis.tdata <= 6'b000000;
     
     table_gold = '{63'b000000110011000000001101010101110101000000101010011101101000001, 63'b111111100100000110010000110101001001100101111001001101001010111, 63'b000001001010001010101011110100110000101111011111101100001111010, 63'b111100010110010011011101110111000010111010010010101110000100001, 
     63'b000110101110100000110001110000100110010000001000101010010010110, 63'b110011011111000111101001111111101111000100111100100010111111001, 63'b011000111100001001011001100001111101101101010100110011100100110, 63'b001111111010010100111001011101011000111110000100010001010011001, 63'b100001110110101111111000100100010010011000100101010100111100111, 
@@ -80,7 +77,7 @@ module tb();
          
         forever begin
                 @(posedge clkin);
-                while (!ready) begin
+                while (!axis.tready) begin
                    @(posedge clkin);
                 end
                 
@@ -109,14 +106,14 @@ module tb();
         initial begin
             forever begin 
             
-              while (!ready) begin
+              while (!axis.tready) begin
                     @(posedge clkin);
               end
               
               repeat ((LENGTH-2) * HOLD_PARAM) @(posedge clkin);
               
               shift_state = $urandom_range(0,LENGTH);
-              code2 = shift_state;
+              axis.tdata = shift_state;
               
             end 
         end

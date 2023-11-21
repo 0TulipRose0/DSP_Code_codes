@@ -6,21 +6,18 @@ module tb_soc_();
     // Local declarations //
     ////////////////////////
 
-    parameter              PERIOD     = 83.333;
-    parameter              LENGTH     = 63;             //code lenght for checks   
-    parameter              POLY_LEN   = $clog2(LENGTH); //polynom lenght 
+    parameter              PERIOD     = 83.333; 
 
-    logic                  clkin;                       //clocking
-    logic                  rstn;                        //reset
-    logic                  code_gold;                   //1 bit of Gold code      
+    logic                  clkin;                        
+    logic  [4:0]           code_gold;                        
 
     /////////////////
     // Connections //
     /////////////////
 
     top tp(
-        .clkin(clkin),
-        .code_gold(code_gold)
+        .sysclk(clkin),
+        .ja(code_gold)
     );
 
     ////////////////

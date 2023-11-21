@@ -1,14 +1,7 @@
-module top #(    
-    //Lenght of the code
-    parameter N          = 63,
-    //Polynom lenght
-    parameter LENGTH     = $clog2(N)
-    )(
+module top (
     input logic sysclk,
-    input logic btn[0],
     
-    output logic ja[0],
-    output logic code_gold
+    output logic [4:0] ja
     );
     
         
@@ -17,7 +10,7 @@ module top #(
     // Local declarations //
     ////////////////////////
     
-    logic               aclk, strobe_sig, clk_100MHz;         
+    logic               aclk, clk_100MHz, rstn;         
     axistream_if        axis(aclk);
     
     /////////////////
@@ -26,25 +19,24 @@ module top #(
     
     Gold_gen gold_gen(
         .clkin(clk_100MHz),
-        .rstn(btn[0]), 
+        .rstn(rstn), 
         .code_gold(ja[0]),
-        .strobe_sig_o(strobe_sig),
+        .strobe_sig_o(ja[4]),
         .s_axis(axis)
     );
     
     Generator shift_gen(
         .clkin(clk_100MHz),
-        .rstn(btn[0]),
-        .m_axis(axis)
+        .rstn(rstn),
+        .m_axis(axis),
+        .debug(ja[2])
     );
     
     pll pll(
         .clkin(sysclk),
         .clk_100MHz(clk_100MHz),
         .aclk(aclk),
-        .rstn_lock(btn[0])
+        .rstn_lock(rstn)
     );
-         
-    
 
 endmodule

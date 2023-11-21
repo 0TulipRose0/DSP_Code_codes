@@ -12,8 +12,7 @@ module pll#(
     ////////////////////////
     // Local declarations //
     ////////////////////////
- 
-    logic   LOCKED;
+
     logic   CLKBOUT; 
     
     //////////////////

@@ -5,7 +5,7 @@
  */
 
 
-interface axistream_if #(int DWIDTH = 32, int ID_WIDTH = 4, int DEST_WIDTH = 1, int USER_WIDTH = 4) (
+interface axistream_if #(int DWIDTH = 32, int ID_WIDTH = 4, int DEST_WIDTH = 1, int USER_WIDTH = 6) (
     input aclk
 );
 
