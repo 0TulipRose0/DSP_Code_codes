@@ -13,9 +13,7 @@ module Generator#(
     input logic               clkin,
     input logic               rstn,
     
-    axistream_if.master  m_axis,
-    
-    output logic debug
+    axistream_if.master  m_axis
     
     );
     ////////////////////////
@@ -30,8 +28,7 @@ module Generator#(
    
    enum 
    logic [1:0]        { transaction = 2'b00,
-                        waiting     = 2'b01,
-                        changing    = 2'b10 } state;
+                        waiting     = 2'b01} state;
 
     //////////////////
     // Main program //
@@ -41,6 +38,7 @@ module Generator#(
       if(!rstn) begin
          cnt_shift <= 1'b0;
          transaction_cnt <= NUM_CYCLES; 
+         m_axis.tvalid <= 0;
          
          state <= transaction; 
       end else begin
@@ -49,20 +47,14 @@ module Generator#(
             transaction: begin
                          m_axis.tvalid <= 1;                        
                             if(m_axis.tready && m_axis.tvalid) begin
-//                                state <= changing;
                                 cnt_shift <= cnt_shift + 1'b1;
-                                if(cnt_shift == QUA-1) begin
+                                if(cnt_shift == QUA) begin
                                     m_axis.tvalid <= 0;
                                     cnt_shift <= 1'b0;
                                     state <= waiting;                                                   
                                 end
                             end
                          end
-                         
-//          changing:     begin
-//                            cnt_shift <= cnt_shift + 1'b1;
-//                            state <= transaction;
-//                         end
                          
            waiting:     begin
                             if(transaction_cnt == 0) begin
@@ -73,11 +65,13 @@ module Generator#(
          endcase
 
          transaction_cnt <= transaction_cnt - 1'b1;
+         if(transaction_cnt == 0) begin
+         transaction_cnt <= NUM_CYCLES;
+         end
      end            
     end
     
     assign m_axis.tdata = table_shift[cnt_shift];
     assign m_axis.tuser = 1'b0; 
-    assign debug = cnt_shift[0];
-
+       
 endmodule

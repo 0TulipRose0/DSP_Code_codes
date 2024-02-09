@@ -41,7 +41,7 @@ module M_Sequence_gen1#(
     
     always_comb begin
         xor_op = ^(POLYNOME & phase); 
-        code = code_i; 
+//        code = code_i;         
     end
     
     always_ff @(posedge clkin) begin
@@ -52,11 +52,15 @@ module M_Sequence_gen1#(
             out <= 0;
             strobe_o <= 0;
                        
-        end else if((code_i != 0 || code_i == 0) && (valid || hold_cnt != 0)) begin         
-            ready_o  <= 1'b0;                           
-            hold_cnt <= HOLD - 1;          
+        end else if(valid || hold_cnt != 0) begin   
+              
+           if(valid && ready_o) code <= code_i;  
+               
+            if(valid) begin
+            ready_o  <= 1'b0; 
+            hold_cnt <= HOLD - 2; end          
             
-                if(cnt == N) begin
+                if(cnt == N && !ready_o) begin
                     //Phase should not be only zeros!
                     //generated from python script
                         case(code)
@@ -101,8 +105,8 @@ module M_Sequence_gen1#(
          end else begin
             out <= 0;
             ready_o <= 1'b1;
-            cnt <= N;                                        
-            if(cnt == 63 && ~valid) strobe_o <= 0;
+            cnt <= N;                            
+            if (cnt == 63 && ~valid) strobe_o <= 0;                        
          end
     end
 

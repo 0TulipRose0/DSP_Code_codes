@@ -28,8 +28,7 @@ module top (
     Generator shift_gen(
         .clkin(clk_100MHz),
         .rstn(rstn),
-        .m_axis(axis),
-        .debug(ja[2])
+        .m_axis(axis)
     );
     
     pll pll(

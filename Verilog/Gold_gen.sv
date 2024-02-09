@@ -46,8 +46,7 @@ module Gold_gen#(
     );
     
     M_Sequence_gen2 #(6'b100111, 6'd63, 4'd6, 7'd3) 
-    m2
-    ( 
+    m2( 
     .clkin(clkin),
     .rstn(rstn),
     .out(out2),
@@ -66,13 +65,13 @@ module Gold_gen#(
     assign strobe_sig_o = strobe_o;
     assign code_gold = out1 ^ out2;
     
-    always_ff @(posedge clkin) begin
+    always_comb begin
         if(s_axis.tvalid) begin           
-            valid1 <= 1;
-            valid2 <= 1;                        
+            valid1 = 1;
+            valid2 = 1;                        
         end else begin                          
-            valid1 <= 0;
-            valid2 <= 0;           
+            valid1 = 0;
+            valid2 = 0;           
         end
         
     end
